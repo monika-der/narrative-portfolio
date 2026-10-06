@@ -1,5 +1,17 @@
 # Narrative Design Portfolio — Flask
 
+A personal portfolio focused on narrative design, interactive storytelling, character perspective and worldbuilding.
+The portfolio brings together my background in Literary Studies and Software Development, combining traditional fiction with interactive and system-based approaches to storytelling.
+
+The portfolio itself is built with:
+* Python
+* Flask
+* Jinja2
+* HTML
+* CSS
+* Vanilla JavaScript
+
+The interactive Two Vampires project is implemented as a standalone HTML/CSS/JavaScript experience and embedded in the Flask portfolio.
 ## Run locally
 
 ```bash
@@ -8,14 +20,3 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
 ```
-
-Open `http://127.0.0.1:5000`.
-
-## Where to edit writing
-- `templates/content/the_arrow.html` — full The Arrow text
-- `templates/content/twine_project.html` — Twine presentation / embed area
-- `templates/content/relics.html` — item descriptions
-- `app.py` — project metadata and case-study copy
-- `templates/index.html` — homepage / About / contact placeholder
-
-The Arrow is intentionally styled as a readable text editor: editor chrome outside, serif prose inside, max reading width ~720px, warm off-white text, generous spacing.
