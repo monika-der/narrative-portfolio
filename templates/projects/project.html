@@ -1,0 +1,114 @@
+```jinja2
+{% extends "base.html" %}
+
+{% block title %}
+    {{ project.title }} — Monika Kosiarska
+{% endblock %}
+
+{% block content %}
+<main>
+    <section class="project-hero">
+        <div class="container">
+            <a
+                class="back-link"
+                href="{{ url_for('index') }}#work"
+            >
+                ← All work
+            </a>
+
+            <div class="project-label">
+                <span>{{ project.number }}</span>
+                / {{ project.type }}
+            </div>
+
+            <h1>
+                {{ project.title }}
+            </h1>
+
+            <p class="project-subtitle">
+                {{ project.subtitle }}
+            </p>
+
+            <div class="tags large-tags">
+                {% for tag in project.focus %}
+                    <span>{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="section project-intro">
+        <div class="container project-layout">
+            <aside>
+                <p class="section-kicker">
+                    ABOUT THE PROJECT
+                </p>
+            </aside>
+
+            <article class="project-body">
+                <p class="lead">
+                    {{ project.intro }}
+                </p>
+
+                <div class="project-notes">
+                    {% for heading, text in project.sections %}
+                        <div class="project-block">
+                            <p class="section-kicker">
+                                {{ heading }}
+                            </p>
+
+                            <p>
+                                {{ text }}
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </article>
+        </div>
+    </section>
+
+    {% if project.artifact == "story" %}
+    <section class="artifact-section">
+        <div class="container artifact-heading">
+            <p class="section-kicker">SHORT FICTION</p>
+            <span>Full story</span>
+        </div>
+
+        <div class="container artifact-shell">
+            <div class="window-bar">
+                <div class="window-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <small>the_arrow.txt</small>
+
+                <span class="file-meta">
+                    TEXT
+                </span>
+            </div>
+
+            <article class="story-text">
+                {% include "content/the_arrow.html" %}
+            </article>
+        </div>
+    </section>
+
+{% elif project.artifact == "twine" %}
+    {% include "content/twine_project.html" %}
+
+{% elif project.artifact == "items" %}
+    {% include "content/relics.html" %}
+{% endif %}
+
+    <section class="project-footer">
+        <div class="container">
+            <a href="{{ url_for('index') }}#work">
+                ← Back to selected work
+            </a>
+        </div>
+    </section>
+</main>
+{% endblock %}
+```

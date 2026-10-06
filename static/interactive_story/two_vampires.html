@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two Vampires — Interactive Story</title>
+  <style>
+    :root {
+      --bg: #11100f;
+      --panel: #181614;
+      --text: #d8d0c4;
+      --muted: #8f877d;
+      --accent: #a98b67;
+      --accent-light: #d0b48f;
+      --line: #302b27;
+      --soft: #211e1b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% -10%, #211d19 0%, transparent 38%),
+        var(--bg);
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.75;
+    }
+
+    .shell {
+      width: min(760px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 70px 0 90px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 52px;
+    }
+
+    .brand {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #restart {
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    #restart:hover { color: var(--accent-light); }
+
+    .passage {
+      animation: appear 0.45s ease;
+    }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .kicker {
+      margin: 0 0 12px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    h1, h2 {
+      color: #eee8df;
+      font-weight: 400;
+      line-height: 1.15;
+    }
+
+    h1 {
+      margin: 0 0 30px;
+      font-size: clamp(2.5rem, 8vw, 4.6rem);
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin: 0 0 28px;
+      font-size: clamp(1.8rem, 5vw, 2.7rem);
+    }
+
+    p { margin: 0 0 1.25em; }
+
+    .lead {
+      font-size: 1.13rem;
+      color: #e1d9ce;
+    }
+
+    .dialogue {
+      margin-left: 1.3rem;
+      color: #eee5d9;
+    }
+
+    .aside {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .evidence {
+      margin: 34px 0;
+      padding: 22px 24px;
+      border-left: 2px solid var(--accent);
+      background: var(--soft);
+      font-family: "Courier New", monospace;
+      font-size: 0.86rem;
+      line-height: 1.65;
+      color: #c9c0b4;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+      margin-top: 38px;
+    }
+
+    .choice {
+      width: 100%;
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .choice::before {
+      content: "→";
+      margin-right: 12px;
+      color: var(--accent);
+    }
+
+    .choice:hover {
+      border-color: #655746;
+      background: #191714;
+      color: #f0e8dd;
+    }
+
+    .endmark {
+      margin-top: 48px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    @media (max-width: 600px) {
+      .shell {
+        width: min(100% - 30px, 760px);
+        padding-top: 35px;
+      }
+      header { margin-bottom: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">Interactive fiction · Paris, 2094</div>
+      <button id="restart" type="button">Start over</button>
+    </header>
+    <section id="story" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const story = document.getElementById("story");
+    const state = {
+      firstWitness: null,
+      metAndrew: false,
+      metSamuel: false,
+      evidence: []
+    };
+
+    const passages = {
+      start: {
+        kicker: "Paris · 2094",
+        body: `
+          <p class="lead">Paris has changed.</p>
+          <p>Once, people believed technology would save them. Now, more and more live without it — without networks, machines, sometimes even without the knowledge of how the old world worked.</p>
+          <p>The old systems are gone.</p>
+          <p>The new ones are not trusted.</p>
+          <p>And beneath the streets, another old system survives.</p>
+          <p>Vampires have lived among humans for centuries, hidden behind a fragile agreement with the people who know they exist. <strong>Helix Ward</strong> calls itself their protector. Most vampires call it something else.</p>
+          <p>Eighty years ago, a human woman named Claudette discovered what that agreement was really built on.</p>
+          <p>She did not live long enough to tell the world.</p>
+        `,
+        choices: [
+          ["Open the recovered file.", "archive"]
+        ]
+      },
+
+      archive: {
+        kicker: "Recovered archive · HW-17",
+        body: `
+          <p>You are an archivist hired to catalogue material recovered during the demolition of an abandoned Helix Ward clinic.</p>
+          <p>Most of the archive is useless: damaged records, blank identification forms, medical codes belonging to people who officially never existed.</p>
+          <p>Then you find Claudette.</p>
+          <div class="evidence">
+            CLAUDETTE MOREAU<br>
+            STATUS: HUMAN<br>
+            CLEARANCE: INTERNAL<br>
+            LAST ACCESS: 14 NOV 2014<br>
+            FILE STATUS: REMOVED
+          </div>
+          <p>Someone has crossed out the final line by hand.</p>
+          <p>Underneath it, in faded ink, are four words:</p>
+          <p class="dialogue">ASK THE VAMPIRES.</p>
+          <p>Two names appear repeatedly in the surviving records.</p>
+        `,
+        choices: [
+          ["Find Andrew.", "andrew_intro"],
+          ["Find Samuel.", "samuel_intro"]
+        ]
+      },
+
+      andrew_intro: {
+        kicker: "Interview · Andrew",
+        onEnter: () => {
+          state.metAndrew = true;
+          if (!state.firstWitness) state.firstWitness = "Andrew";
+        },
+        body: `
+          <p>Andrew has been a vampire since the 1990s.</p>
+          <p>He still dresses like he belongs in a world that no longer exists. Worn denim, old trainers, a jacket that has seen better decades.</p>
+          <p>There is something disarmingly human about him.</p>
+          <p>He smiles easily. He laughs often. He remembers birthdays, keeps old photographs, and still bothers with things that stopped mattering to most vampires a long time ago.</p>
+          <p>When you say Claudette's name, the smile disappears.</p>
+          <p class="dialogue">“I haven't heard that name in a very long time.”</p>
+        `,
+        choices: [
+          ["What was Claudette like?", "andrew_claudette"],
+          ["How did you meet her?", "andrew_meeting"]
+        ]
+      },
+
+      andrew_claudette: {
+        kicker: "Andrew remembers",
+        body: `
+          <p>Andrew smiles.</p>
+          <p>For a moment, he looks somewhere past you, as if he can still see her standing there.</p>
+          <p class="dialogue">“She was curious, stubborn, impossible to discourage once she had decided she wanted an answer. She hated being told that something was none of her business.”</p>
+          <p>He laughs softly.</p>
+          <p class="dialogue">“And she laughed at everything. Not politely. Not quietly.”</p>
+          <p>He remembers the little things: the way she forgot her keys, the way she walked into rooms full of vampires and behaved as though they were simply people.</p>
+          <p class="dialogue">“She never treated us like monsters.”</p>
+          <p>A pause.</p>
+          <p class="dialogue">“Sometimes, I think that was the first thing I loved about her.”</p>
+        `,
+        choices: [
+          ["What was she to you?", "andrew_relationship"],
+          ["How did you meet her?", "andrew_meeting"]
+        ]
+      },
+
+      andrew_relationship: {
+        kicker: "Andrew remembers",
+        body: `
+          <p>Andrew looks down, then back at you.</p>
+          <p class="dialogue">“Claudette was one of those people who somehow became part of your life before you noticed it happening.”</p>
+          <p class="dialogue">“You start saving things to tell them. You know what they'll say before they say it.”</p>
+          <p>His smile fades.</p>
+          <p class="dialogue">“And then one day, you realise you can't imagine the world without them in it.”</p>
+          <p class="dialogue">“I loved her. Just... perhaps not in the way you're asking.”</p>
+        `,
+        choices: [
+          ["Tell me more about her.", "andrew_memory_end"],
+          ["Ask about Helix Ward instead.", "andrew_meeting"]
+        ]
+      },
+
+      andrew_memory_end: {
+        kicker: "A story left unfinished",
+        body: `
+          <p>Andrew starts talking.</p>
+          <p>He tells you about the first time they argued, about nights Claudette arrived unannounced and about the way she sat beside him without speaking when she knew he didn't want to talk.</p>
+          <p class="dialogue">“She knew how to make people feel like they mattered.”</p>
+          <p>His voice falters.</p>
+          <p class="dialogue">“She did that for me.”</p>
+          <p>He wipes his eyes with the heel of his hand and gives an embarrassed laugh.</p>
+          <p class="dialogue">“Sorry. I just...”</p>
+          <p class="dialogue">“I miss her.”</p>
+          <p>He looks away.</p>
+          <p>You leave with a clearer picture of Claudette — and no clearer idea of how she died.</p>
+          <p class="aside">Some questions reveal a person. Others reveal what happened to them. You chose the first.</p>
+          <div class="endmark">Ending · Memory</div>
+        `,
+        choices: [
+          ["Return to the archive and investigate again.", "archive"]
+        ]
+      },
+
+      andrew_meeting: {
+        kicker: "Andrew remembers",
+        onEnter: () => addEvidence("helix"),
+        body: `
+          <p class="dialogue">“She wasn't supposed to be there.”</p>
+          <p>Andrew laughs softly.</p>
+          <p class="dialogue">“Neither was I, actually.”</p>
+          <p>There had been a meeting. Vampires and humans - mortals responsible for keeping their existence quiet.</p>
+          <p class="dialogue">“Helix Ward was there. Back then it was smaller. A few offices, a few people, a lot of paperwork.”</p>
+          <p>They handled identification papers, safe houses and medical records — everything a vampire could not obtain through ordinary channels.</p>
+          <p>Claudette worked with them.</p>
+          <p class="dialogue">“She came to bring some documents. Then she stayed.”</p>
+          <p>A small smile.</p>
+          <p class="dialogue">“Of course she stayed and started asking questions.”</p>
+          <p>His expression changes.</p>
+          <p class="dialogue">“Uncomfortable ones.”</p>
+          <p class="dialogue">“I remember thinking she was going to get herself killed.”</p>
+          <p>A pause.</p>
+          <p class="dialogue">“I didn't know how right I was.”</p>
+        `,
+        choices: () => state.metSamuel
+          ? [["Check the surviving Helix records.", "movement_records"]]
+          : [["Find Samuel.", "samuel_intro"], ["Ask what Helix knew about her.", "andrew_knowledge"]]
+      },
+
+      andrew_knowledge: {
+        kicker: "Interview · Andrew",
+        body: `
+          <p>Andrew hesitates.</p>
+          <p class="dialogue">“They knew what they needed to know.”</p>
+          <p>You wait.</p>
+          <p class="dialogue">“Addresses, contacts, travel. medical histories. It sounds worse when you list it like that.”</p>
+          <p>He gives a small, uneasy smile.</p>
+          <p class="dialogue">“But we needed them.”</p>
+          <p>You ask whether Claudette trusted Helix Ward.</p>
+          <p>Andrew does not answer immediately.</p>
+          <p class="dialogue">“At first.”</p>
+        `,
+        choices: [
+          ["Find Samuel.", "samuel_intro"]
+        ]
+      },
+
+      samuel_intro: {
+        kicker: "Interview · Samuel",
+        onEnter: () => {
+          state.metSamuel = true;
+          if (!state.firstWitness) state.firstWitness = "Samuel";
+        },
+        body: `
+          <p>No one knows exactly how old Samuel is.</p>
+          <p>He has lived long enough to remember cities by names they no longer bear, and governments that disappeared centuries ago.</p>
+          <p>Dark clothes, immaculate coat, silver at his temples that may or may not be real.</p>
+          <p>He is quiet when there is nothing worth saying and brutally direct when there is.</p>
+          <p>Samuel has rules and he does not break them.</p>
+          <p>When you mention Claudette, his expression barely changes.</p>
+          <p class="dialogue">“What do you want to know?”</p>
+        `,
+        choices: [
+          ["What was Claudette like?", "samuel_claudette"],
+          ["How did you meet her?", "samuel_meeting"]
+        ]
+      },
+
+      samuel_claudette: {
+        kicker: "Samuel remembers",
+        body: `
+          <p>Samuel is quiet for a moment.</p>
+          <p class="dialogue">“She was difficult.”</p>
+          <p class="dialogue">“Curious, impatient. Far too willing to ask questions that had very good reasons not to be answered.”</p>
+          <p>He looks down at his hands.</p>
+          <p class="dialogue">“She had no sense of self-preservation. Or perhaps she simply valued answers more than safety.”</p>
+          <p>A faint smile appears and vanishes.</p>
+          <p class="dialogue">“I liked that about her.”</p>
+          <p class="dialogue">“Sometimes, inconvenient people are the ones who notice what everyone else has learned to ignore.”</p>
+        `,
+        choices: [
+          ["What was she to you?", "samuel_relationship"],
+          ["How did you meet her?", "samuel_meeting"]
+        ]
+      },
+
+      samuel_relationship: {
+        kicker: "Samuel remembers",
+        body: `
+          <p>Samuel raises an eyebrow.</p>
+          <p class="dialogue">“That depends on what you mean by ‘to you.’”</p>
+          <p>He studies you for a moment.</p>
+          <p class="dialogue">“She was a friend.”</p>
+          <p>A pause.</p>
+          <p class="dialogue">“Among other things.”</p>
+          <p>There is the faintest hint of a smile.</p>
+          <p class="dialogue">“Claudette was not someone you simply knew. She had a way of making herself difficult to ignore.”</p>
+          <p>He looks away.</p>
+          <p class="dialogue">“And somehow, I always let her.”</p>
+        `,
+        choices: [
+          ["Did you sleep with her?", "samuel_romance_end"],
+          ["Ask about Helix Ward.", "samuel_meeting"]
+        ]
+      },
+
+      samuel_romance_end: {
+        kicker: "Interview terminated",
+        body: `
+          <p>For the first time, Samuel looks genuinely irritated.</p>
+          <p>He leans back and exhales slowly through his nose.</p>
+          <p class="dialogue">“Is that really what you want to talk about?”</p>
+          <p>He stands.</p>
+          <p class="dialogue">“I think we're done here.”</p>
+          <p>You have learned something about Samuel.</p>
+          <p>Nothing about Claudette's death.</p>
+          <div class="endmark">Ending · Closed Door</div>
+        `,
+        choices: [
+          ["Return to the archive and investigate again.", "archive"]
+        ]
+      },
+
+      samuel_meeting: {
+        kicker: "Samuel remembers",
+        onEnter: () => addEvidence("helix"),
+        body: `
+          <p>Samuel does not answer immediately.</p>
+          <p class="dialogue">“Helix Ward.”</p>
+          <p class="dialogue">“They were still small then. They handled things for vampires — identification, safe houses, medical records.”</p>
+          <p>His expression remains unreadable.</p>
+          <p class="dialogue">“Claudette worked with them. That's how we met.”</p>
+          <p>A pause.</p>
+          <p class="dialogue">“She was useful.”</p>
+          <p>Samuel looks at you.</p>
+          <p class="dialogue">“And very human.”</p>
+        `,
+        choices: [
+          ["What was Helix Ward really doing for vampires?", "samuel_helix"]
+        ]
+      },
+
+      samuel_helix: {
+        kicker: "Interview · Samuel",
+        body: `
+          <p class="dialogue">“They kept us hidden.”</p>
+          <p>Samuel says it as though the answer should be obvious.</p>
+          <p class="dialogue">“Documents, safe houses, medical care, connections.”</p>
+          <p>A pause.</p>
+          <p class="dialogue">“They also knew where we lived.”</p>
+          <p class="dialogue">“Who we were, who we associated with, where we travelled.”</p>
+          <p>Silence.</p>
+          <p class="dialogue">“They called it protection.”</p>
+          <p class="dialogue">“It was useful.”</p>
+          <p>Another pause.</p>
+          <p class="dialogue">“Useful things are rarely free.”</p>
+        `,
+        choices: [
+          ["What did Helix know about Claudette?", "samuel_knowledge"]
+        ]
+      },
+
+      samuel_knowledge: {
+        kicker: "Interview · Samuel",
+        body: `
+          <p>Samuel's expression hardens.</p>
+          <p class="dialogue">“More than they should have.”</p>
+          <p class="dialogue">“They knew where she lived, who she spoke to, which vampires she had contact with.”</p>
+          <p>His fingers tap once against the arm of the chair.</p>
+          <p class="dialogue">“They knew she had started looking into things she was not supposed to know about.”</p>
+          <p class="dialogue">“That was enough to make her dangerous.”</p>
+          <p class="dialogue">“Not to us.”</p>
+          <p>His voice is quieter now.</p>
+          <p class="dialogue">“To them.”</p>
+        `,
+        choices: () => state.metAndrew
+          ? [["Check the surviving Helix records.", "movement_records"]]
+          : [["Find Andrew.", "andrew_intro"], ["Check the surviving Helix records.", "movement_records"]]
+      },
+
+      movement_records: {
+        kicker: "Investigation · Helix archive",
+        onEnter: () => addEvidence("movement"),
+        body: `
+          <p>You stop asking the vampires what they remember and start searching the archive.</p>
+          <p>Claudette's personnel file is gone, but some of the records she accessed are not.</p>
+          <p>During the last six months of her life, one internal classification appears again and again:</p>
+          <div class="evidence">
+            EXPOSURE EVENT<br>
+            CATEGORY: CONTAINED<br>
+            PUBLIC RISK: LOW<br>
+            RESPONSE: HELIX WARD
+          </div>
+          <p>At first, the reports seem ordinary by Helix standards. A human sees something they should not - a vampire is identified and Helix intervenes before the story spreads.</p>
+          <p>Then you notice the dates.</p>
+          <p>Several reports were created <em>before</em> the incidents they describe.</p>
+          <p>One lists the location of an exposure event eleven hours before the first witness supposedly arrived there.</p>
+          <p>Another names the vampire involved two days before the encounter took place.</p>
+          <p>These were not predictions.</p>
+          <p>They were plans.</p>
+        `,
+        choices: [
+          ["Follow Claudette's access history.", "claudette_discovery"],
+          ["Ask Samuel what an exposure event was.", "samuel_exposure"]
+        ]
+      },
+
+      samuel_exposure: {
+        kicker: "Interview · Samuel",
+        body: `
+          <p>You put three exposure reports in front of Samuel.</p>
+          <p>He reads the first, then the second. He does not touch the third.</p>
+          <p class="dialogue">“You knew about these?”</p>
+          <p class="dialogue">“Not then.”</p>
+          <p class="dialogue">“But Claudette did.”</p>
+          <p>His eyes lift to yours.</p>
+          <p class="dialogue">“Eventually.”</p>
+          <p>You point to the timestamps.</p>
+          <p class="dialogue">“Helix knew where the exposures would happen because Helix arranged them.”</p>
+          <p>Samuel says nothing.</p>
+          <p class="dialogue">“Why?”</p>
+          <p class="dialogue">“Depends.”</p>
+          <p>The word lands without emphasis.</p>
+          <p class="dialogue">“Create a danger, contain it, remind everyone who keeps them safe.”</p>
+        `,
+        choices: [
+          ["What did Claudette intend to do?", "samuel_refusal"],
+          ["Follow Claudette's access history.", "claudette_discovery"]
+        ]
+      },
+
+      claudette_discovery: {
+        kicker: "Investigation · Claudette's trail",
+        onEnter: () => addEvidence("exposure"),
+        body: `
+          <p>Claudette did not discover a single crime. She discovered a system.</p>
+          <p>Helix Ward provided vampires with identities, medicine, safe houses and protection from exposure. In return, it collected addresses, relationships, movements and records that no government possessed.</p>
+          <p>That alone was not what frightened her.</p>
+          <p>Buried in scheduling files are instructions for controlled encounters between selected humans and vampires. Witnesses were placed where Helix knew they would see too much. Incidents were allowed to begin, then stopped before they could spread.</p>
+          <div class="evidence">
+            INTERNAL OBJECTIVE:<br>
+            MAINTAIN COMMUNITY RELIANCE ON<br>
+            HELIX CONTAINMENT INFRASTRUCTURE
+          </div>
+          <p>The danger Helix protected vampires from was, sometimes, a danger Helix had created.</p>
+          <p>And every controlled crisis gave the organisation another reason to demand more information, more access, more obedience.</p>
+          <p>Claudette copied enough records to prove it.</p>
+          <p>Three days later, she disappeared.</p>
+        `,
+        choices: [
+          ["Find out what Claudette planned to do with the evidence.", "claudette_plan"]
+        ]
+      },
+
+      claudette_plan: {
+        kicker: "Recovered correspondence",
+        body: `
+          <p>A fragment survives in an unsent message recovered from Claudette's account.</p>
+          <div class="evidence">
+            They don't protect the agreement.<br>
+            They make sure neither side can survive without them.<br><br>
+            I have the reports.<br>
+            Enough of them.<br><br>
+            If I can get them outside Helix, people will know.
+          </div>
+          <p>The recipient field has been erased.</p>
+          <p>But a second record tells you that on the same evening, Claudette met Samuel.</p>
+        `,
+        choices: [
+          ["Ask Samuel about their last meeting.", "samuel_refusal"]
+        ]
+      },
+
+      samuel_refusal: {
+        kicker: "Interview · Samuel",
+        body: `
+          <p>Samuel knows which night you mean before you show him the date.</p>
+          <p class="dialogue">“She wanted my help.”</p>
+          <p class="dialogue">“To expose Helix?”</p>
+          <p class="dialogue">“To expose everything. Helix. The agreement. Us.”</p>
+          <p class="dialogue">“You knew she was right.”</p>
+          <p class="dialogue">“That was not the problem.”</p>
+          <p class="dialogue">“Then what was?”</p>
+          <p>Samuel looks toward the dark window.</p>
+          <p class="dialogue">“She said people had a right to know.”</p>
+          <p>A pause.</p>
+          <p class="dialogue">“People have a remarkable talent for turning knowledge into weapons.”</p>
+          <p>He refused to help her release the files.</p>
+          <p>He also refused to turn her in.</p>
+          <p>Claudette was left alone.</p>
+        `,
+        choices: [
+          ["Trace what happened after she left Samuel.", "last_night"]
+        ]
+      },
+
+      last_night: {
+        kicker: "Investigation · 14 November 2014",
+        body: `
+          <p>Now you know why Helix wanted Claudette silent. The remaining question is how they found her.</p>
+          <p>You reconstruct her final night from fragments.</p>
+          <div class="evidence">
+            18:07 — CLAUDETTE MOREAU / HELIX EXIT RECORDED<br>
+            19:32 — MEETING / SAMUEL<br>
+            21:48 — ENCRYPTED ARCHIVE COPY CREATED<br>
+            22:14 — INCOMING CALL / ANDREW [RESTRICTED]<br>
+            22:41 — LOCATION FLAG / FACILITY 12<br>
+            05:39 — TRACKING STATUS: CLOSED
+          </div>
+          <p>One entry stands out.</p>
+          <p>Andrew called Helix at 22:14.</p>
+          <p>Twenty-seven minutes later, Claudette's location was added to the system: Facility 12.</p>
+          <p>Until then, there is nothing in the records to suggest Helix knew where she was.</p>
+          <p>Whatever Andrew said during that call, it may have told them where to find her.</p>
+        `,
+        choices: [
+          ["Go to Facility 12.", "facility"],
+          ["Confront Andrew about the call.", "andrew_call_early"]
+        ]
+      },
+
+      facility: {
+        kicker: "Investigation · Facility 12",
+        onEnter: () => addEvidence("message"),
+        body: `
+          <p>Facility 12 is beneath an old medical building on the eastern edge of Paris.</p>
+          <p>The entrance has been sealed for decades, but the lock is newer.</p>
+          <p>Someone has been here.</p>
+          <p>Inside, most of the rooms have been stripped clean. No computers, papers, equipment.</p>
+          <p>But they left the walls.</p>
+          <p>Behind a storage cabinet, scratched into old paint, you find a sentence:</p>
+          <div class="evidence">THEY KNEW I WOULD COME HERE.</div>
+          <p>Below it is a mark you recognise from the archive.</p>
+          <p>Claudette's initials.</p>
+          <p>Helix had already known she possessed the exposure files. What they still needed was her location — and, if possible, the copies.</p>
+          <p>Your phone - one of the few networked devices you still carry - loses its signal.</p>
+          <p>Footsteps sound in the corridor above you.</p>
+          <p>You photograph the wall and leave through the service tunnel.</p>
+        `,
+        choices: [
+          ["Ask Samuel who Claudette trusted.", "samuel_truth"],
+          ["Confront Andrew.", "andrew_call_early"]
+        ]
+      },
+
+      andrew_call_early: {
+        kicker: "Interview · Andrew",
+        body: `
+          <p>You place the record in front of Andrew.</p>
+          <p class="dialogue">“You called Helix Ward at 22:14.”</p>
+          <p>He stares at the timestamp.</p>
+          <p class="dialogue">“I don't remember.”</p>
+          <p>You say nothing.</p>
+          <p class="dialogue">“It was eighty years ago.”</p>
+          <p>He sounds defensive now.</p>
+          <p class="dialogue">“I don't remember every call I made.”</p>
+          <p>He looks frightened.</p>
+          <p>Not like a man caught lying, but like a man beginning to suspect his own memory.</p>
+        `,
+        choices: [
+          ["Find the recording.", "call_recording"],
+          ["Ask Samuel what Andrew did.", "samuel_truth"]
+        ]
+      },
+
+      samuel_truth: {
+        kicker: "Interview · Samuel",
+        body: `
+          <p>You show Samuel the movement record.</p>
+          <p>He does not look surprised.</p>
+          <p class="dialogue">“You knew.”</p>
+          <p class="dialogue">“I knew Helix found her.”</p>
+          <p class="dialogue">“How?”</p>
+          <p>Samuel is silent long enough that you think he will refuse.</p>
+          <p class="dialogue">“Andrew.”</p>
+          <p>You ask whether Andrew killed her.</p>
+          <p class="dialogue">“No.”</p>
+          <p>The answer is immediate.</p>
+          <p class="dialogue">“Helix killed her because of what she found.”</p>
+          <p class="dialogue">“Andrew told them where to find her.”</p>
+          <p>You stare at him.</p>
+          <p class="dialogue">“Why would he do that?”</p>
+          <p>Samuel looks at you.</p>
+          <p class="dialogue">“Because unlike Claudette, he still believed they were protectors.”</p>
+        `,
+        choices: [
+          ["Find proof.", "call_recording"]
+        ]
+      },
+
+      call_recording: {
+        kicker: "Recovered evidence · 22:14",
+        onEnter: () => addEvidence("call"),
+        body: `
+          <p>The audio file should have been deleted.</p>
+          <p>It survives inside a corrupted backup copied twice under the wrong case number.</p>
+          <p>Andrew's voice emerges from eighty years ago.</p>
+          <div class="evidence">
+            ANDREW: She's scared. She thinks Helix is after her.<br>
+            UNKNOWN: Claudette has been under considerable stress.<br>
+            ANDREW: She says she found something in the records.<br>
+            UNKNOWN: We know. We only want to bring her somewhere safe.<br>
+            ANDREW: I don't want anyone to hurt her.<br>
+            UNKNOWN: Neither do we. Where is she now?<br>
+            [11 SECONDS SILENCE]<br>
+            ANDREW: ...Facility Twelve. Please make sure she's safe.
+          </div>
+          <p>Twenty-seven minutes later, Claudette entered Facility 12.</p>
+          <p>She was never recorded leaving it.</p>
+        `,
+        choices: [
+          ["Play the recording for Andrew.", "andrew_confrontation"]
+        ]
+      },
+
+      andrew_confrontation: {
+        kicker: "Interview · Andrew",
+        body: `
+          <p>Andrew listens without moving.</p>
+          <p>When the recording ends, he does not ask you to play it again.</p>
+          <p class="dialogue">“I remember.”</p>
+          <p>His voice is barely audible.</p>
+          <p class="dialogue">“She came to me. She said the exposure events weren't accidents.”</p>
+          <p class="dialogue">“She said Helix had arranged them. That they were frightening us on purpose so we'd keep needing them.”</p>
+          <p class="dialogue">“She wanted to release everything.”</p>
+          <p>He presses both hands against his face.</p>
+          <p class="dialogue">“I didn't believe her.”</p>
+          <p class="dialogue">“Helix had helped me for years. Papers. Doctors. Places to go when things went wrong.”</p>
+          <p class="dialogue">“I thought she was frightened and seeing enemies everywhere.”</p>
+          <p class="dialogue">“I told her I knew people there. I told her they weren't going to hurt her.”</p>
+          <p>He looks at you.</p>
+          <p>For the first time since you met him, there is nothing warm in his expression.</p>
+          <p>Only horror.</p>
+          <p class="dialogue">“I told them where she was.”</p>
+          <p class="dialogue">“I thought they would protect her.”</p>
+        `,
+        choices: [
+          ["Return to Facility 12.", "final_note"],
+          ["Ask why Samuel never told him.", "why_samuel"]
+        ]
+      },
+
+      why_samuel: {
+        kicker: "Interview · Samuel",
+        body: `
+          <p class="dialogue">“Why didn't you tell him?”</p>
+          <p>Samuel looks tired.</p>
+          <p class="dialogue">“Tell him what?”</p>
+          <p class="dialogue">“That he gave her to them.”</p>
+          <p class="dialogue">“He knew what he did.”</p>
+          <p class="dialogue">“He forgot.”</p>
+          <p>Samuel's mouth tightens.</p>
+          <p class="dialogue">“No.”</p>
+          <p class="dialogue">“He remembered it differently.”</p>
+          <p>A pause.</p>
+          <p class="dialogue">“People do that when the truth makes living with themselves inconvenient.”</p>
+        `,
+        choices: [
+          ["Return to Facility 12.", "final_note"]
+        ]
+      },
+
+      final_note: {
+        kicker: "Facility 12 · Hidden room",
+        body: `
+          <p>You return in daylight. This time you know what you are looking for.</p>
+          <p>Behind the wall carrying Claudette's message is a maintenance shaft. Behind the shaft, a room too narrow to appear on the surviving plans.</p>
+          <p>There is almost nothing inside.</p>
+          <p>A chair.</p>
+          <p>A rusted metal table.</p>
+          <p>You finally have the whole shape of it.</p>
+          <p>Claudette had discovered that Helix Ward's power depended on fear. The organisation manufactured some of the crises it claimed to prevent, then used those crises to keep vampires dependent, traceable and obedient.</p>
+          <p>She intended to expose the system.</p>
+          <p>That is why Helix needed her silent.</p>
+          <p>Samuel knew she was in danger and refused to help her expose the truth. He chose the secrecy of his own kind over her safety.</p>
+          <p>Andrew did the opposite - he tried to save her, but trusted the institution she was running from and gave it her location.</p>
+          <p>Neither man killed Claudette.</p>
+          <p>Both failed her.</p>
+          <div class="endmark">Ending · Exposure</div>
+        `,
+        choices: [
+          ["Read the story again from another perspective.", "archive"]
+        ]
+      }
+
+    };
+
+    function addEvidence(key) {
+      if (!state.evidence.includes(key)) state.evidence.push(key);
+    }
+
+    function render(id) {
+      const p = passages[id];
+      if (!p) return;
+      if (p.onEnter) p.onEnter();
+
+      const choices = typeof p.choices === "function" ? p.choices() : (p.choices || []);
+
+      story.innerHTML = `
+        <article class="passage">
+          ${p.kicker ? `<p class="kicker">${p.kicker}</p>` : ""}
+          ${p.title ? `<h${id === "start" ? "1" : "2"}>${p.title}</h${id === "start" ? "1" : "2"}>` : ""}
+          ${p.body || ""}
+          <div class="choices">
+            ${choices.map(([label, target]) =>
+              `<button class="choice" type="button" data-target="${target}">${label}</button>`
+            ).join("")}
+          </div>
+        </article>
+      `;
+
+      story.querySelectorAll("[data-target]").forEach(button => {
+        button.addEventListener("click", () => render(button.dataset.target));
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function reset() {
+      state.firstWitness = null;
+      state.metAndrew = false;
+      state.metSamuel = false;
+      state.evidence = [];
+      render("start");
+    }
+
+    document.getElementById("restart").addEventListener("click", reset);
+    render("start");
+  </script>
+</body>
+</html>

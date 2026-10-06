@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-copy reveal">
+                <p class="eyebrow">
+                    <span class="status-dot"></span>
+                    Narrative design portfolio
+                </p>
+
+                <h1>Monika<br><span>Kosiarska</span></h1>
+                <p class="hero-role">Narrative Design · Literary Studies · Software Development</p>
+                <p class="hero-text">
+                    I am interested in stories, fictional worlds and the ways familiar narratives
+                    can change when told from a different perspective.
+                </p>
+                <a class="text-link" href="#work">Selected work ↓</a>
+            </div>
+
+            <div class="editor-card hero-editor reveal">
+                <div class="window-bar">
+                    <div>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <small>narrative_design.txt</small>
+                </div>
+
+                <div class="code">
+                    <p><i>01</i> story = {</p>
+                    <p><i>02</i> &nbsp;&nbsp;<em>"character"</em>: <em>"a point of view"</em>,</p>
+                    <p><i>03</i> &nbsp;&nbsp;<em>"desire"</em>: <em>"a reason to act"</em>,</p>
+                    <p><i>04</i> &nbsp;&nbsp;<em>"conflict"</em>: <em>"a reason it won't be easy"</em>,</p>
+                    <p><i>05</i> &nbsp;&nbsp;<em>"choice"</em>: <em>"something that changes things"</em>,</p>
+                    <p><i>06</i> &nbsp;&nbsp;<em>"consequence"</em>: <em>"something that matters"</em></p>
+                    <p><i>07</i> }</p>
+                    <p><i>08</i></p>
+                    <p><i>09</i> <b>def</b> tell_story(story):</p>
+                    <p><i>10</i> &nbsp;&nbsp;<b>if</b> story[<em>"choice"</em>]:</p>
+                    <p><i>11</i> &nbsp;&nbsp;&nbsp;&nbsp;<b>return</b> story[<em>"consequence"</em>]</p>
+                    <p><i>12</i></p>
+                    <p><i>13</i> tell_story(story)</p>
+                    <p class="cursor"><i>14</i> █</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="work" class="section projects-section">
+        <div class="container">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">01 / SELECTED WORK</p>
+                    <h2>Writing & narrative projects</h2>
+                </div>
+                <span class="section-count">03 — WORKS</span>
+            </div>
+
+            <div class="projects-grid">
+                {% for slug, p in projects.items() %}
+                <a class="project-card reveal" href="{{ url_for('project', slug=slug) }}">
+                    <div class="project-top">
+                        <span class="project-number">{{ p.number }}</span>
+                        <span class="project-arrow">↗</span>
+                    </div>
+
+                    <p class="project-type">{{ p.type }}</p>
+                    <h3>{{ p.title }}</h3>
+                    <p>{{ p.subtitle }}</p>
+
+                    <div class="tags">
+                        {% for tag in p.focus %}
+                        <span>{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="section">
+        <div class="container two-col">
+            <div>
+                <p class="section-kicker">02 / ABOUT</p>
+                <h2>From literature to <span>software development</span></h2>
+            </div>
+
+            <div class="about-copy">
+                <p>
+                    I have a background in literary studies and over ten years of experience
+                    working with content, information and technology.
+                </p>
+                <p>
+                    My academic background taught me to look closely at how stories are built,
+                    how characters and perspectives shape meaning, and how familiar narratives
+                    can change when told differently.
+                </p>
+                <p>
+                    I’m interested in bringing that perspective into narrative design — combining
+                    writing, storytelling and an understanding of technology to create stories,
+                    characters and fictional worlds across different forms and media.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="section contact-section">
+        <div class="container contact-box">
+            <div>
+                <p class="section-kicker">03 / CONTACT</p>
+                <h2>Let's make<br><span> something memorable.</span></h2>
+            </div>
+
+            <div class="contact-links">
+            <p><a
+                href="mailto:monikakosiarska8@gmail.com"
+                class="email-link"
+            >
+                monikakosiarska8@gmail.com
+            </a></p>
+
+            <a
+                href="https://www.linkedin.com/in/monika-kosiarska-942b0742/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                LinkedIn ↗
+            </a>
+
+            <a
+                href="https://github.com/monika-der"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                GitHub ↗
+            </a>
+        </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
