@@ -3,7 +3,9 @@ import shutil
 
 from app import app, PROJECTS
 
+
 OUTPUT_DIR = Path("_site")
+BASE_PATH = "/narrative-portfolio"
 
 
 def write_page(path: str, content: str) -> None:
@@ -25,35 +27,44 @@ def build():
 
     OUTPUT_DIR.mkdir()
 
-    # Copy CSS, JavaScript and interactive projects
     shutil.copytree(
         "static",
         OUTPUT_DIR / "static",
         dirs_exist_ok=True,
     )
 
-    with app.test_client() as client:
+    with app.test_request_context(
+        "/",
+        environ_base={
+            "SCRIPT_NAME": BASE_PATH
+        }
+    ):
         # Homepage
-        response = client.get("/")
-        check_response(response, "/")
+        html = app.jinja_env.get_template(
+            "index.html"
+        ).render(
+            projects=PROJECTS
+        )
 
         write_page(
             "index.html",
-            response.get_data(as_text=True),
+            html,
         )
 
         # Project pages
-        for slug in PROJECTS:
-            path = f"/project/{slug}"
-            response = client.get(path)
-            check_response(response, path)
+        for slug, project in PROJECTS.items():
+            html = app.jinja_env.get_template(
+                "projects/project.html"
+            ).render(
+                project=project,
+                slug=slug,
+            )
 
             write_page(
                 f"project/{slug}/index.html",
-                response.get_data(as_text=True),
+                html,
             )
 
-    # Prevent GitHub Pages from processing the site with Jekyll
     (OUTPUT_DIR / ".nojekyll").touch()
 
     print()
@@ -61,10 +72,10 @@ def build():
     print(f"✓ Output: {OUTPUT_DIR.resolve()}")
     print()
     print("Generated pages:")
-    print("  /")
+    print(f"  {BASE_PATH}/")
 
     for slug in PROJECTS:
-        print(f"  /project/{slug}/")
+        print(f"  {BASE_PATH}/project/{slug}/")
 
 
 if __name__ == "__main__":

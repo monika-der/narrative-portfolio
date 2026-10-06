@@ -2,6 +2,8 @@ from flask import Flask, render_template, abort
 
 app = Flask(__name__)
 
+app.config["APPLICATION_ROOT"] = "/narrative-portfolio"
+
 PROJECTS = {
     "the-arrow": {
         "number": "01", "title": "The Arrow",
